@@ -36,7 +36,7 @@ python3 t5.py --fp32 --small
 export DNNL_DEFAULT_FPMATH_MODE=BF16
 python3 t5.py --fp32 --small --compile --dynamic --autocast
 ############################################################
-# T5 - SMALL
+# Phi2
 ############################################################
 export DNNL_DEFAULT_FPMATH_MODE=FP32
 python3 msft_phi2.py --fp32 
