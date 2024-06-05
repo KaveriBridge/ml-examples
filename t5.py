@@ -30,9 +30,9 @@ import time
 
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 # Define model and tokenizer
-if(base_enabled == true):
+if(base_enabled == True):
   model_name = "t5-base"
-if(small_enabled == true):
+if(small_enabled == True):
   model_name = "t5-small"
 
 tokenizer = T5Tokenizer.from_pretrained(model_name)
