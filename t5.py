@@ -8,6 +8,8 @@ parser.add_argument("--autocast", action="store_true", help="Enable automatic ca
 parser.add_argument("--dynamic", action="store_true", help="Enable dynamic compilation")
 parser.add_argument("--compile", action="store_true", help="Use torch compiler")
 parser.add_argument("--fp32", action="store_true", help="Default mode")
+parser.add_argument("--base", action="store_true", help="Run T5-base")
+parser.add_argument("--small", action="store_true", help="Run T5-small")
 
 # Parse arguments from the command line
 #args = parser.parse_args(['--fp32', "--dynamic", "--fastmath"])
@@ -19,6 +21,8 @@ autocast_enabled = args.autocast
 dynamic_enabled = args.dynamic
 compile_enabled = args.compile
 fp32_enabled = args.fp32
+base_enabled = args.base
+small_enabled = args.small
 
 # Your program logic here, using the enabled flags
 import torch
@@ -26,7 +30,11 @@ import time
 
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 # Define model and tokenizer
-model_name = "t5-small" # or "t5-base"
+if(base_enabled == true):
+  model_name = "t5-base"
+if(small_enabled == true):
+  model_name = "t5-small"
+
 tokenizer = T5Tokenizer.from_pretrained(model_name)
 orig_model = T5ForConditionalGeneration.from_pretrained(model_name)
 
