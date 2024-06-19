@@ -1,12 +1,21 @@
 ############################################################
-# BERT
+# BERT base
 ############################################################
 # FP32
 export DNNL_DEFAULT_FPMATH_MODE=FP32
-python3 bert-clip-vit.py --bert --fp32
+python3 bert-clip-vit.py --bertbase --fp32
 # BF16 (Compile, Autocast, Dynamic)
 export DNNL_DEFAULT_FPMATH_MODE=BF16
-python3 bert-clip-vit.py --bert --fp32 --compile --dynamic --autocast
+python3 bert-clip-vit.py --bertbase --fp32 --compile --dynamic --autocast
+############################################################
+# BERT large
+############################################################
+# FP32
+export DNNL_DEFAULT_FPMATH_MODE=FP32
+python3 bert-clip-vit.py --bertlarge --fp32
+# BF16 (Compile, Autocast, Dynamic)
+export DNNL_DEFAULT_FPMATH_MODE=BF16
+python3 bert-clip-vit.py --bertlarge --fp32 --compile --dynamic --autocast
 ############################################################
 # CLIP-VIT
 ############################################################
