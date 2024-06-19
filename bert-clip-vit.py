@@ -16,15 +16,6 @@ parser.add_argument("--clipvit", action="store_true", help="Run VIT")
 #args = parser.parse_args(['--fp32', '--bertlarge'])
 args = parser.parse_args()
 
-# Set flags based on parsed arguments
-accuracy_enabled = args.accuracy
-autocast_enabled = args.autocast
-dynamic_enabled = args.dynamic
-compile_enabled = args.compile
-fp32_enabled = args.fp32
-
-
-# Your program logic here, using the enabled flags
 import torch
 import time
 
