@@ -27,11 +27,5 @@ models = ["distilbert-base-uncased", "bert-base-uncased", "roberta-base"]
 
 for model in models:
     pipe = pipeline("sentiment-analysis", model=model)
-    result = benchmark(pipe, short_review)
-    print(f"{model} short sentence: {result}")
     result = benchmark(pipe, long_review)
     print(f"{model} long sentence: {result}")
-    result = benchmark(pipe, [short_review] * 8)
-    print(f"{model} short sentence batched: {result}")
-    result = benchmark(pipe, [long_review] * 8)
-    print(f"{model} long sentence batched: {result}")
