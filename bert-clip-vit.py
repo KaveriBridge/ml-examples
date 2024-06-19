@@ -8,11 +8,12 @@ parser.add_argument("--autocast", action="store_true", help="Enable automatic ca
 parser.add_argument("--dynamic", action="store_true", help="Enable dynamic compilation")
 parser.add_argument("--compile", action="store_true", help="Use torch compiler")
 parser.add_argument("--fp32", action="store_true", help="Default mode")
-parser.add_argument("--bert", action="store_true", help=" Run BERT")
+parser.add_argument("--bertbase", action="store_true", help=" Run BERT base")
+parser.add_argument("--bertlarge", action="store_true", help=" Run BERT large")
 parser.add_argument("--clipvit", action="store_true", help="Run VIT")
 
 # Parse arguments from the command line
-#args = parser.parse_args(['--fp32', "--dynamic", "--fastmath"])
+#args = parser.parse_args(['--fp32', '--bertlarge'])
 args = parser.parse_args()
 
 # Set flags based on parsed arguments
@@ -38,13 +39,23 @@ def bench(model, input, n=100):
     end = time.time()
     return((end-start)*1000)/n
 
-if (args.bert):
+if (args.bertbase):
   from transformers import BertTokenizer, BertModel
   device = torch.device("cpu")
   tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
   orig_model = BertModel.from_pretrained('bert-base-uncased').to(device=device)
   orig_model.eval()
-  text = "Replace me with any text you'd like. " * 12
+  text = "Replace me with any text you'd like. " * 14
+  print(f"Sequence length: {len(text)}")
+  encoded_input = tokenizer(text, return_tensors='pt').to(device=device)
+
+if (args.bertlarge):
+  from transformers import BertTokenizer, BertModel
+  device = torch.device("cpu")
+  tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
+  orig_model = BertModel.from_pretrained('bert-large-uncased').to(device=device)
+  orig_model.eval()
+  text = "Replace me with any text you'd like. " * 14
   print(f"Sequence length: {len(text)}")
   encoded_input = tokenizer(text, return_tensors='pt').to(device=device)
 
@@ -62,21 +73,21 @@ if (args.clipvit):
 import json
 data = []  # Initialize an empty list to hold JSON data
 
-if fp32_enabled:
+if (args.fp32):
   avg_time = bench(orig_model, encoded_input)
   data.append({"FP32": f"{avg_time:.2f} ms"})
 
-if dynamic_enabled:
+if (args.dynamic):
   model = torch.ao.quantization.quantize_dynamic(orig_model,{torch.nn.Linear},dtype=torch.qint8)
   avg_time = bench(model, encoded_input)
   data.append({"Dyn Quant": f"{avg_time:.2f} ms"})
 
-if autocast_enabled:
+if (args.autocast):
   with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
     avg_time = bench(orig_model, encoded_input)
     data.append({"Autocast": f"{avg_time:.2f} ms"})
 
-if compile_enabled:
+if (args.compile):
   model = torch.compile(orig_model, backend="inductor")
   avg_time = bench(model, encoded_input)
   data.append({"TorchCompile": f"{avg_time:.2f} ms"})
