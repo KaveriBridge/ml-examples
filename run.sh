@@ -45,6 +45,20 @@ python3 t5.py --fp32 --small
 export DNNL_DEFAULT_FPMATH_MODE=BF16
 python3 t5.py --fp32 --small --compile --dynamic --autocast
 ############################################################
+# BART
+############################################################
+export DNNL_DEFAULT_FPMATH_MODE=FP32
+python3 bart.py --bart --fp32
+export DNNL_DEFAULT_FPMATH_MODE=BF16
+python3 bart.py --bart --fp32 --compile --dynamic --autocast
+############################################################
+# DistilBART
+############################################################
+export DNNL_DEFAULT_FPMATH_MODE=FP32
+python3 bart.py --distilBART --fp32
+export DNNL_DEFAULT_FPMATH_MODE=BF16
+python3 bart.py --distilBART --fp32 --compile --dynamic --autocast
+############################################################
 # Phi2
 ############################################################
 export DNNL_DEFAULT_FPMATH_MODE=FP32
