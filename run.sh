@@ -65,3 +65,10 @@ export DNNL_DEFAULT_FPMATH_MODE=FP32
 python3 msft_phi2.py --fp32 
 export DNNL_DEFAULT_FPMATH_MODE=BF16
 python3 msft_phi2.py --fp32 --compile --dynamic --autocast
+############################################################
+# RESNET-50
+############################################################
+export DNNL_DEFAULT_FPMATH_MODE=BF16
+python3 resnet.py --fp32 --compile --dynamic --autocast --print 2>/dev/null
+export DNNL_DEFAULT_FPMATH_MODE=FP32
+python3 resnet.py --fp32 --print 2>/dev/null
