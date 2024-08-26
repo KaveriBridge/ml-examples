@@ -8,6 +8,7 @@ parser.add_argument("--autocast", action="store_true", help="Enable automatic ca
 parser.add_argument("--dynamic", action="store_true", help="Enable dynamic compilation")
 parser.add_argument("--compile", action="store_true", help="Use torch compiler")
 parser.add_argument("--fp32", action="store_true", help="Default mode")
+parser.add_argument("--print", action="store_true", help=" print result")
 
 # Parse arguments from the command line
 #args = parser.parse_args(['--fp32'])
@@ -26,6 +27,12 @@ processor = AutoImageProcessor.from_pretrained("microsoft/resnet-50")
 model = ResNetForImageClassification.from_pretrained("microsoft/resnet-50")
 
 def bench(model, input, n=100):
+  
+  if(args.print):
+    logits = model(**input).logits
+    predicted_label = logits.argmax(-1).item()
+    print(model.config.id2label[predicted_label])
+    
 # import torch.backends.mkldnn
 # with torch.no_grad(), torch.backends.mkldnn.flags(enabled=False):
   with torch.no_grad():
