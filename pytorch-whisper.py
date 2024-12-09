@@ -1,58 +1,104 @@
-import time
+#!curl -o OSR_us_000_0010_8k.wav https://www.voiptroubleshooter.com/open_speech/american/OSR_us_000_0010_8k.wav
+
+import argparse
+
+parser = argparse.ArgumentParser(description="Program with optimization flags")
+
+# Define optional flags with short aliases
+parser.add_argument("--accuracy", action="store_true", help="Enable accuracy-focused optimizations")
+parser.add_argument("--autocast", action="store_true", help="Enable automatic casting and use BF16")
+parser.add_argument("--dynamic", action="store_true", help="Enable dynamic compilation")
+parser.add_argument("--compile", action="store_true", help="Use torch compiler")
+parser.add_argument("--fp32", action="store_true", help="Default mode")
+parser.add_argument("--print", action="store_true", help=" print result")
+
+
+# Parse arguments from the command line
+args = parser.parse_args(['--print', '--dynamic', '--compile'])
+#args = parser.parse_args()
+
+
 import torch
-from transformers import WhisperProcessor, WhisperForConditionalGeneration
-
-# Load the processor and model
-model_name = "openai/whisper-small"
-processor = WhisperProcessor.from_pretrained(model_name)
-model = WhisperForConditionalGeneration.from_pretrained(model_name)
-
-# Ensure the model is on the GPU if available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-
-# Load example audio input
-# Replace this with a real WAV/FLAC file or audio input array
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import numpy as np
-audio_length = 30  # seconds
-sample_rate = 16000
-audio = np.random.randn(audio_length * sample_rate).astype(np.float32)
+import soundfile as sf
+import time as time
 
-# Tokenize the audio input
-inputs = processor(audio, sampling_rate=sample_rate, return_tensors="pt")
-input_features = inputs.input_features.to(device)
+# Set device to CPU
+torch_dtype = torch.float32
+device="cpu"
 
-# Define the transcription function
-def transcribe(input_features):
-    # Generate tokens
-    predicted_ids = model.generate(input_features, max_length=128)
-    # Decode tokens into text
-    transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)
-    return transcription
+import requests
 
-# Benchmarking
-def benchmark_transcription(func, input_features, iterations=10):
-    start_time = time.time()
-    for _ in range(iterations):
-        _ = func(input_features)
-    end_time = time.time()
-    avg_time = (end_time - start_time) / iterations
-    print(f"Average inference time over {iterations} runs: {avg_time:.4f} seconds")
+def bench(model, processor, audio_input, n=10):
 
-# Warm-up the model (for JIT or GPU initialization latency)
-_ = transcribe(input_features)
+  # Create the pipeline
+  pipe = pipeline(
+      "automatic-speech-recognition",
+      model=model,
+      tokenizer=processor.tokenizer,
+      feature_extractor=processor.feature_extractor,
+      torch_dtype=torch_dtype,
+      device=device
+  )
 
-# Benchmark without any additional optimizations
-print("Benchmarking regular inference:")
-benchmark_transcription(transcribe, input_features)
+  if(args.print):
+        result = pipe(audio_input)
+        print("Transcription:", result["text"])
 
-# Optionally benchmark with torch.compile (if PyTorch 2.0+ is available)
-if torch.__version__ >= "2.0":
-    print("Benchmarking with torch.compile optimization:")
-    optimized_model = torch.compile(model)
-    def transcribe_optimized(input_features):
-        predicted_ids = optimized_model.generate(input_features, max_length=128)
-        transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)
-        return transcription
+  with torch.no_grad():
+    # Warmup
+    for _ in range(10):
+      result = pipe(audio_input)
+    start = time.time()
 
-    benchmark_transcription(transcribe_optimized, input_features)
+    # Benchmark
+    for _ in range(n):
+      result = pipe(audio_input)
+    end = time.time()
+    return((end-start)*1000)/n
+
+
+# Load the model and processor
+model_id = "openai/whisper-large-v3-turbo"
+orig_model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch.float32, low_cpu_mem_usage=True)
+orig_model.to("cpu")
+orig_model.eval()
+processor = AutoProcessor.from_pretrained(model_id)
+
+# Create an empty audio file (1 second of silence)
+#empty_audio = np.zeros((16000,), dtype=np.float32)  # 16000 samples for 1 second at 16kHz
+#sf.write("empty_audio.wav", empty_audio, 16000)
+
+# Load the empty audio file
+#audio_input, _ = sf.read("empty_audio.wav")
+
+audio_input, _ = sf.read("OSR_us_000_0010_8k.wav")
+
+import json
+data = []  # Initialize an empty list to hold JSON data
+
+if (args.fp32):
+  avg_time = bench(orig_model, processor, audio_input, 10)
+  data.append({"FP32": f"{avg_time:.2f} ms"})
+
+if (args.dynamic):
+  model = torch.ao.quantization.quantize_dynamic(orig_model,{torch.nn.Linear},dtype=torch.qint8)
+  avg_time = bench(model, processor, audio_input, 10)
+  data.append({"Dyn Quant": f"{avg_time:.2f} ms"})
+
+if (args.autocast):
+  with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+    avg_time = bench(orig_model, processor, audio_input, 10)
+    data.append({"Autocast": f"{avg_time:.2f} ms"})
+
+if (args.compile):
+  model = torch.compile(orig_model, backend="inductor")
+  avg_time = bench(model, processor, audio_input, 10)
+  data.append({"TorchCompile": f"{avg_time:.2f} ms"})
+
+# Convert the list to a JSON string
+json_array = json.dumps(data, indent=4)  # Add indentation for readability (optional)
+
+# Print the JSON array
+print(json_array)
