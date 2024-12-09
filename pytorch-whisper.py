@@ -41,8 +41,8 @@ def bench(model, processor, audio_input, n=10):
       model=model,
       tokenizer=processor.tokenizer,
       feature_extractor=processor.feature_extractor,
-      chunk_length_s=30,
-      batch_size=16,  # batch size for inference - set based on your device
+      #chunk_length_s=30,
+      #batch_size=16,  # batch size for inference - set based on your device
       torch_dtype=torch_dtype,
       device=device
   )
