@@ -22,11 +22,9 @@ parser.add_argument("--turbo", action="store_true", help="Whisper Large Turbo Mo
 #args = parser.parse_args(['--print', '--dynamic', '--compile'])
 args = parser.parse_args()
 
-
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import numpy as np
-import soundfile as sf
 import time as time
 
 # Set device to CPU
@@ -43,23 +41,25 @@ def bench(model, processor, audio_input, n=10):
       model=model,
       tokenizer=processor.tokenizer,
       feature_extractor=processor.feature_extractor,
+      chunk_length_s=30,
+      batch_size=16,  # batch size for inference - set based on your device
       torch_dtype=torch_dtype,
       device=device
   )
 
   if(args.print):
-        result = pipe(audio_input)
+        result = pipe(audio_input, generate_kwargs={"return_timestamps": True})
         print("Transcription:", result["text"])
 
   with torch.no_grad():
     # Warmup
     for _ in range(10):
-      result = pipe(audio_input)
+      result = pipe(audio_input, generate_kwargs={"return_timestamps": True})
     start = time.time()
 
     # Benchmark
     for _ in range(n):
-      result = pipe(audio_input)
+      result = pipe(audio_input, generate_kwargs={"return_timestamps": True})
     end = time.time()
     return((end-start)*1000)/n
 
@@ -82,14 +82,14 @@ orig_model.to("cpu")
 orig_model.eval()
 processor = AutoProcessor.from_pretrained(model_id)
 
-# Create an empty audio file (1 second of silence)
+# Create an empty audio file (1 second of silence) and load it
+#import soundfile as sf
 #empty_audio = np.zeros((16000,), dtype=np.float32)  # 16000 samples for 1 second at 16kHz
 #sf.write("empty_audio.wav", empty_audio, 16000)
-
-# Load the empty audio file
 #audio_input, _ = sf.read("empty_audio.wav")
 
-audio_input, _ = sf.read("OSR_us_000_0010_8k.wav")
+import librosa
+audio_input, _ = librosa.load('OSR_us_000_0010_8k.wav', sr=16000, mono=True)
 
 import json
 data = []  # Initialize an empty list to hold JSON data
