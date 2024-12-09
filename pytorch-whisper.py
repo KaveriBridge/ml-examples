@@ -11,6 +11,11 @@ parser.add_argument("--dynamic", action="store_true", help="Enable dynamic compi
 parser.add_argument("--compile", action="store_true", help="Use torch compiler")
 parser.add_argument("--fp32", action="store_true", help="Default mode")
 parser.add_argument("--print", action="store_true", help=" print result")
+parser.add_argument("--tiny", action="store_true", help="Whisper Tiny Model")
+parser.add_argument("--small", action="store_true", help="Whisper Small Model")
+parser.add_argument("--medium", action="store_true", help="Whisper Medium Model")
+parser.add_argument("--large", action="store_true", help="Whisper Large Model")
+parser.add_argument("--turbo", action="store_true", help="Whisper Large Turbo Model")
 
 
 # Parse arguments from the command line
@@ -61,7 +66,18 @@ def bench(model, processor, audio_input, n=10):
 
 # Load the model and processor
 model_id = "openai/whisper-large-v3-turbo"
-orig_model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch.float32)
+if (args.tiny):
+  model_id = "openai/whisper-tiny"
+elif (args.small):  
+  model_id = "openai/whisper-small"
+elif (args.medium):
+model_id = "openai/whisper-medium"
+elif (args.large):
+model_id = "openai/whisper-large-v3"
+elif (args.turbo):
+  model_id = "openai/whisper-large-v3-turbo"
+
+orig_model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch.float32, use_safetensors=True)
 orig_model.to("cpu")
 orig_model.eval()
 processor = AutoProcessor.from_pretrained(model_id)
@@ -88,7 +104,7 @@ if (args.dynamic):
   data.append({"Dyn Quant": f"{avg_time:.2f} ms"})
 
 if (args.autocast):
-  with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+  with torch.autocast(device_type="cpu", dtype=torch.float16):
     avg_time = bench(orig_model, processor, audio_input, 10)
     data.append({"Autocast": f"{avg_time:.2f} ms"})
 
