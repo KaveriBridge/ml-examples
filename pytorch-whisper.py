@@ -61,7 +61,7 @@ def bench(model, processor, audio_input, n=10):
 
 # Load the model and processor
 model_id = "openai/whisper-large-v3-turbo"
-orig_model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch.float32, low_cpu_mem_usage=True)
+orig_model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch.float32)
 orig_model.to("cpu")
 orig_model.eval()
 processor = AutoProcessor.from_pretrained(model_id)
