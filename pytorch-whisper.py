@@ -14,8 +14,8 @@ parser.add_argument("--print", action="store_true", help=" print result")
 
 
 # Parse arguments from the command line
-args = parser.parse_args(['--print', '--dynamic', '--compile'])
-#args = parser.parse_args()
+#args = parser.parse_args(['--print', '--dynamic', '--compile'])
+args = parser.parse_args()
 
 
 import torch
