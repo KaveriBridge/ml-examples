@@ -71,9 +71,9 @@ if (args.tiny):
 elif (args.small):  
   model_id = "openai/whisper-small"
 elif (args.medium):
-model_id = "openai/whisper-medium"
+  model_id = "openai/whisper-medium"
 elif (args.large):
-model_id = "openai/whisper-large-v3"
+  model_id = "openai/whisper-large-v3"
 elif (args.turbo):
   model_id = "openai/whisper-large-v3-turbo"
 
