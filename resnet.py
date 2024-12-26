@@ -55,7 +55,7 @@ import json
 data = []  # Initialize an empty list to hold JSON data
 
 if (args.fp32):
-  with torch.backends.mkldnn.flags(enabled=False):
+  with torch.backends.mkldnn.flags(enabled=True):
     avg_time = bench(orig_model, encoded_input)
     data.append({"FP32": f"{avg_time:.2f} ms"})
 
