@@ -1,4 +1,4 @@
-!pip install transformers datasets
+#!pip install transformers datasets flax jax jaxlib
 import jax
 import jax.numpy as jnp
 from transformers import FlaxAutoModelForImageClassification, AutoFeatureExtractor
