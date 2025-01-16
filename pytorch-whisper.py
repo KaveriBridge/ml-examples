@@ -29,7 +29,7 @@ import time as time
 
 # Set device to CPU
 torch_dtype = torch.float32
-device="cpu"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 import requests
 
@@ -68,7 +68,7 @@ def bench(model, processor, audio_input, n=10):
 model_id = "openai/whisper-large-v3-turbo"
 if (args.tiny):
   model_id = "openai/whisper-tiny"
-elif (args.small):  
+elif (args.small):
   model_id = "openai/whisper-small"
 elif (args.medium):
   model_id = "openai/whisper-medium"
@@ -81,12 +81,6 @@ orig_model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=tor
 orig_model.to("cpu")
 orig_model.eval()
 processor = AutoProcessor.from_pretrained(model_id)
-
-# Create an empty audio file (1 second of silence) and load it
-#import soundfile as sf
-#empty_audio = np.zeros((16000,), dtype=np.float32)  # 16000 samples for 1 second at 16kHz
-#sf.write("empty_audio.wav", empty_audio, 16000)
-#audio_input, _ = sf.read("empty_audio.wav")
 
 import librosa
 audio_input, _ = librosa.load('OSR_us_000_0010_8k.wav', sr=16000, mono=True)
