@@ -19,6 +19,8 @@ args = parser.parse_args()
 import torch
 import time
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def bench(model, input, n=100):
   with torch.no_grad():
     # Warmup
@@ -32,7 +34,6 @@ def bench(model, input, n=100):
 
 if (args.bertbase):
   from transformers import BertTokenizer, BertModel
-  device = torch.device("cpu")
   tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
   orig_model = BertModel.from_pretrained('bert-base-uncased').to(device=device)
   orig_model.eval()
@@ -42,7 +43,6 @@ if (args.bertbase):
 
 if (args.bertlarge):
   from transformers import BertTokenizer, BertModel
-  device = torch.device("cpu")
   tokenizer = BertTokenizer.from_pretrained('bert-large-uncased')
   orig_model = BertModel.from_pretrained('bert-large-uncased').to(device=device)
   orig_model.eval()
@@ -52,14 +52,14 @@ if (args.bertlarge):
 
 if (args.clipvit):
   from transformers import CLIPProcessor, CLIPModel
-  orig_model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+  orig_model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14").to(device=device)
   processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
 
   from PIL import Image
   import requests
   url = "http://images.cocodataset.org/val2017/000000039769.jpg"
   image = Image.open(requests.get(url, stream=True).raw)
-  encoded_input = processor(text=["a photo of a puma", "a photo of a donkey"], images=image, return_tensors="pt", padding=True)
+  encoded_input = processor(text=["a photo of a puma", "a photo of a donkey"], images=image, return_tensors="pt", padding=True).to(device=device)
 
 import json
 data = []  # Initialize an empty list to hold JSON data
@@ -73,7 +73,7 @@ if (args.dynamic):
   avg_time = bench(model, encoded_input)
   data.append({"Dyn Quant": f"{avg_time:.2f} ms"})
 
-if (args.autocast):
+if (args.autocast): # Only works on CPU
   with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
     avg_time = bench(orig_model, encoded_input)
     data.append({"Autocast": f"{avg_time:.2f} ms"})
