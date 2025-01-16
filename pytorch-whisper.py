@@ -27,9 +27,11 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import numpy as np
 import time as time
 
-# Set device to CPU
-torch_dtype = torch.float32
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Set the device to CUDA if available
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# Set the appropriate data type based on availability of CUDA
+torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
 import requests
 
@@ -77,8 +79,7 @@ elif (args.large):
 elif (args.turbo):
   model_id = "openai/whisper-large-v3-turbo"
 
-orig_model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch.float32, use_safetensors=True)
-orig_model.to("cpu")
+orig_model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch.float32, use_safetensors=True).to(device=device)
 orig_model.eval()
 processor = AutoProcessor.from_pretrained(model_id)
 
