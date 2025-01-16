@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from transformers import pipeline
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def benchmark(pipe, input, runs=1000):
     # Warmup
     for i in range(100):
@@ -26,6 +28,6 @@ long_review = "We were in search of a storage solution for our kids, and their d
 models = ["distilbert-base-uncased", "bert-base-uncased", "roberta-base"]
 
 for model in models:
-    pipe = pipeline("sentiment-analysis", model=model)
+    pipe = pipeline("sentiment-analysis", model=model, device=device)
     result = benchmark(pipe, long_review)
     print(f"{model} long sentence: {result}")
