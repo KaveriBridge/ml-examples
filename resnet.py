@@ -9,6 +9,8 @@ parser.add_argument("--dynamic", action="store_true", help="Enable dynamic compi
 parser.add_argument("--compile", action="store_true", help="Use torch compiler")
 parser.add_argument("--fp32", action="store_true", help="Default mode")
 parser.add_argument("--print", action="store_true", help=" print result")
+parser.add_argument("--resnet", action="store_true", help=" print result")
+parser.add_argument("--mobilenet", action="store_true", help=" print result")
 
 # Parse arguments from the command line
 #args = parser.parse_args(['--fp32'])
@@ -17,14 +19,19 @@ args = parser.parse_args()
 import torch
 import time
 
-from transformers import AutoImageProcessor, ResNetForImageClassification
+from transformers import AutoImageProcessor, AutoModelForImageClassification
 from datasets import load_dataset
 
 dataset = load_dataset("huggingface/cats-image",trust_remote_code=True)
 image = dataset["test"]["image"][0]
 
-processor = AutoImageProcessor.from_pretrained("microsoft/resnet-50")
-model = ResNetForImageClassification.from_pretrained("microsoft/resnet-50")
+if(args.resnet):
+    model_name = "microsoft/resnet-50"
+else:
+    model_name = "google/mobilenet_v2_1.0_224"
+
+processor = AutoImageProcessor.from_pretrained(model_name)
+model = AutoModelForImageClassification.from_pretrained(model_name)
 
 def bench(model, input, n=100):
   
@@ -46,9 +53,9 @@ def bench(model, input, n=100):
     return((end-start)*1000)/n
 
 
-from transformers import AutoImageProcessor, ResNetForImageClassification
-processor = AutoImageProcessor.from_pretrained("microsoft/resnet-50")
-orig_model = ResNetForImageClassification.from_pretrained("microsoft/resnet-50")
+from transformers import AutoImageProcessor, AutoModelForImageClassification
+processor = AutoImageProcessor.from_pretrained(model_name)
+orig_model = AutoModelForImageClassification.from_pretrained(model_name)
 encoded_input = processor(image, return_tensors="pt")
 
 import json
